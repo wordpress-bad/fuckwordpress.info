@@ -1,0 +1,36 @@
+name: Deploy
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@v2
+    - name: Checkout submodules
+      uses: textbook/git-checkout-submodule-action@master
+    - name: build
+      uses: srt32/hugo-action@v0.0.3
+      with:
+        args: "--theme=ghostwriter"
+    - name: move files via rsync
+      env:
+        SSH_KEY: ${{ secrets.SSH_KEY }}
+        SSH_PUB: ${{ secrets.SSH_KEY_PUB}}
+      run: |
+        mkdir -p $HOME/.ssh
+        echo "$SSH_KEY" > "$HOME/.ssh/id_rsa"
+        echo "SSH_PUB" > "$HOME/.ssh/id_rsa.pub"
+        chmod 600 $HOME/.ssh/id_rsa
+        chmod 644 $HOME/.ssh/id_rsa.pub
+        chmod 700 $HOME/.ssh
+        cat >>~/.ssh/config <<END
+        Host server
+            HostName fuckwordpress.info
+            User root
+            IdentityFile ~/.ssh/id_rsa
+            StrictHostKeyChecking no
+        END
+        rsync -r public/ server:/root/public

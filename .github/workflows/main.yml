@@ -33,4 +33,4 @@ jobs:
             IdentityFile ~/.ssh/id_rsa
             StrictHostKeyChecking no
         END
-        rsync -r public/ server:/root/public
+        rsync -r public/ server:/srv/public
